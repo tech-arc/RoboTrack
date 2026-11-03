@@ -4,6 +4,7 @@ import {
   CheckCircle2, 
   Circle, 
   RotateCcw, 
+  Undo2,
   Wand2, 
   BookOpen, 
   Play, 
@@ -32,6 +33,7 @@ export default function AssemblyView({ onSwitchToSimulation, wiringState, setWir
   const [selectedColor, setSelectedColor] = useState(WIRE_COLORS[0].hex);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('checklist'); // 'checklist' | 'specs'
+  const [wireHistory, setWireHistory] = useState([]); // Stack tracking past wire arrays for undo
 
   const workbenchRef = useRef(null);
 
@@ -90,6 +92,9 @@ export default function AssemblyView({ onSwitchToSimulation, wiringState, setWir
           color: selectedColor,
         };
 
+        // Push current wires snapshot to history stack before adding new wire
+        setWireHistory((prev) => [...prev, wires]);
+
         const updatedWires = [...wires, newWire];
         setWiringState(prev => ({ ...prev, wires: updatedWires }));
 
@@ -112,8 +117,39 @@ export default function AssemblyView({ onSwitchToSimulation, wiringState, setWir
     }
   };
 
+  // Step-by-step Undo: revert to previous wire snapshot or pop last wire
+  const handleUndo = useCallback(() => {
+    if (wireHistory.length === 0 && wires.length === 0) return;
+    soundEngine.playPinClick();
+
+    if (wireHistory.length > 0) {
+      const previousWires = wireHistory[wireHistory.length - 1];
+      setWireHistory((prev) => prev.slice(0, -1));
+      setWiringState(prev => ({ ...prev, wires: previousWires }));
+    } else if (wires.length > 0) {
+      // Fallback: pop the most recently added wire
+      setWiringState(prev => ({ ...prev, wires: prev.wires.slice(0, -1) }));
+    }
+
+    // Cancel any in-progress pin selection
+    setActivePin(null);
+  }, [wireHistory, wires, setWiringState]);
+
+  // Keyboard shortcut listener: Ctrl+Z / Cmd+Z to trigger Undo
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        handleUndo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo]);
+
   // Delete specific wire
   const handleDeleteWire = (wireId) => {
+    setWireHistory((prev) => [...prev, wires]);
     setWiringState(prev => ({
       ...prev,
       wires: prev.wires.filter(w => w.id !== wireId)
@@ -123,6 +159,7 @@ export default function AssemblyView({ onSwitchToSimulation, wiringState, setWir
   // Clear all wires
   const handleClearAll = () => {
     if (window.confirm('Clear all jumper wire connections?')) {
+      setWireHistory((prev) => [...prev, wires]);
       setWiringState(prev => ({ ...prev, wires: [] }));
       setActivePin(null);
     }
@@ -137,6 +174,7 @@ export default function AssemblyView({ onSwitchToSimulation, wiringState, setWir
       color: circ.color,
     }));
 
+    setWireHistory((prev) => [...prev, wires]);
     setWiringState(prev => ({ ...prev, wires: autoWires }));
     soundEngine.playSuccessChime();
     confetti({
@@ -231,9 +269,29 @@ export default function AssemblyView({ onSwitchToSimulation, wiringState, setWir
               Auto-Wire All
             </button>
             <button 
+              onClick={handleUndo}
+              disabled={wires.length === 0 && wireHistory.length === 0}
+              className="btn btn-secondary btn-sm"
+              title="Undo most recent wire (Ctrl+Z)"
+              style={{
+                opacity: (wires.length === 0 && wireHistory.length === 0) ? 0.45 : 1,
+                cursor: (wires.length === 0 && wireHistory.length === 0) ? 'not-allowed' : 'pointer',
+                transition: 'opacity 0.15s ease'
+              }}
+            >
+              <Undo2 size={15} color="#f59e0b" />
+              Undo
+            </button>
+            <button 
               onClick={handleClearAll}
               className="btn btn-outline-danger btn-sm"
               title="Remove all wires"
+              disabled={wires.length === 0}
+              style={{
+                opacity: wires.length === 0 ? 0.45 : 1,
+                cursor: wires.length === 0 ? 'not-allowed' : 'pointer',
+                transition: 'opacity 0.15s ease'
+              }}
             >
               <RotateCcw size={15} />
               Reset Wires
