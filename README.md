@@ -31,14 +31,15 @@
 ## ✨ Key Features
 
 ### 🔌 1. Assembly & Wiring Mode
-- **Realistic Vector Components**: Vector-rendered models with accurate PCB silkscreen, IC chips, terminal screws, and pinouts:
-  - **Arduino Uno R3** (ATmega328P microcontroller)
-  - **L298N Dual H-Bridge Driver** (Aluminium heatsink, 12V/GND/5V terminals, logic headers)
-  - **Dual TCRT5000 IR Modules** (Optical photodiode pairs, LM393 comparators, trimpots)
+- **Photorealistic Vector Components**: Vector-rendered models with authentic PCB silkscreen, copper traces, IC chips, terminal screws, and pinouts:
+  - **Arduino Uno R3** (ATmega328P DIP-28 microcontroller, USB Type-B port, reset button, crystal oscillator, barrel jack)
+  - **L298N Dual H-Bridge Driver** (Aluminium heatsink, 12V/GND/5V terminal blocks, jumper blocks, logic headers)
+  - **Dual TCRT5000 IR Modules** (Optical photodiode pairs, LM393 comparators, sensitivity trimpots, power/signal LEDs)
   - **Left & Right BO DC Gear Motors** (Yellow chassis wheels with tread details)
   - **2S 7.4V Li-ion Battery Pack** (Dual 18650 cells)
 - **Interactive Bézier Jumper Wires**: Dynamic cubic Bézier curves ($C(t)$) simulating realistic gravitational wire droop.
 - **Wire Color Palette**: Red (Power/VCC), Black (GND), Yellow (PWM), Blue (Direction), Green (Signal), and Purple (Logic).
+- **Undo History Stack & Shortcuts**: Step-by-step wire undo capability with dedicated UI button and `Ctrl+Z` / `Cmd+Z` keyboard shortcut.
 - **Circuit Verification Engine**: Validates all 19 mandatory hardware connections (including common system ground, logic lines, and motor polarity).
 - **Auto-Wire Fallback**: Instant one-click wiring option for rapid presentation transitions.
 - **Celebration Feedback**: Built-in confetti particle animation upon achieving 100% circuit integrity.
@@ -149,6 +150,42 @@ npm run preview
 
 ---
 
+## 📁 Project Structure
+
+```text
+RoboTrack/
+├── src/
+│   ├── components/
+│   │   ├── Assembly/
+│   │   │   ├── ComponentSVGs/     # Photorealistic vector hardware models (Arduino, L298N, IR, etc.)
+│   │   │   ├── AssemblyView.jsx   # Drag-and-drop workbench, wire history stack & validation
+│   │   │   ├── WiringCanvas.jsx   # Dynamic Bézier jumper wire renderer
+│   │   │   └── WiringGuideModal.jsx # Pinout reference & connection checklist
+│   │   ├── CodeViewer/
+│   │   │   └── ArduinoCodeModal.jsx # Real-time synchronized firmware inspector
+│   │   ├── Simulation/
+│   │   │   ├── SimulationCanvas.jsx # 60 FPS HTML5 Canvas pixel sampling & kinematics engine
+│   │   │   ├── SimulationControls.jsx # Track selector, speed sliders & freehand paint tools
+│   │   │   ├── SimulationView.jsx   # Top-level simulation layout
+│   │   │   └── TelemetryHUD.jsx     # Live sensor meters, motor PWM & heading dials
+│   │   └── Navbar.jsx             # Mode switcher and quick action bar
+│   ├── data/
+│   │   ├── arduinoSource.js       # Embedded C++ firmware template & syntax map
+│   │   ├── pinConnections.js      # Circuit validation graph & pin coordinate registry
+│   │   └── trackPresets.js        # Mathematical track coordinate definitions
+│   ├── utils/
+│   │   ├── robotLogic.js          # Differential steering math & pixel luminance analysis
+│   │   └── soundEngine.js         # Web Audio API procedural sound synthesizer
+│   ├── App.jsx                    # Root state manager (wires, simulation flags)
+│   ├── index.css                  # Dark sci-fi theme design system
+│   └── main.jsx
+├── index.html
+├── package.json
+└── vite.config.js
+```
+
+---
+
 ## 🛠️ Arduino C++ Source Code
 
 This firmware runs directly on the ATmega328P microcontroller:
@@ -246,6 +283,7 @@ When presenting this project for an IoT / Robotics evaluation:
 3. **Showcase Optical Raycasting**: In *Live Simulation Mode*, switch to **"Freehand Paint Mode"** and draw a custom path to prove the bot reads pixels dynamically rather than following a predefined curve.
 4. **Demonstrate Intersection Crossing**: Select **"Infinity 8 Cross-Track"** to show how `(1, 1)` logic maintains momentum through perpendicular track crossings.
 5. **Inspect Synchronized Firmware**: Open the **"Inspect Synchronized Arduino C++"** modal to show evaluators how software actions map directly to embedded register writes.
+6. **Live Undo Demonstration**: Demonstrate the breadboard wiring step-by-step; press `Ctrl+Z` / `Cmd+Z` to effortlessly revert erroneous wire placements without resetting the workbench.
 
 ---
 
